@@ -296,9 +296,9 @@ int main() {
 		for ( int x = 0; x < 128; x++ ) {
 			int index = x + y * 128;
 
-			float u = x / 128.0f * PI;
-			float v = y / 128.0f * PI;
-			dst_points[index] << u, v, u * u * u + v * v; // ( sin(x), cos(y), x^2 + y^2 )
+			float u = x / 128.0f;
+			float v = y / 128.0f;
+			dst_points[index] << u, v, u * u * u + v * v;
 
 			Eigen::Vector3f s, t;
 			s << 1, 0, 3.0f * u * u;
