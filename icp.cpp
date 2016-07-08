@@ -1,6 +1,5 @@
 // created by ephtracy
-
-#include "stdafx.h"
+// sample codes to demonstrate alghorithms of point-to-point/point-to-plane registration
 
 #include <iostream>
 #include <vector>
