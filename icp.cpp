@@ -305,9 +305,6 @@ int main() {
 			t << 0, 1, 2.0f * v;
 
 			dst_normals[index] = s.cross( t );
-
-			//std::cout << dst_normals[index] << std::endl;
-
 			dst_normals[index].normalize();
 		}
 	}
