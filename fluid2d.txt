@@ -1,0 +1,39 @@
+vec4 advect( sampler2D F, sampler2D U, vec2 p, float dt ) {
+	vec2 v = texture2D( U, p ).xy;
+
+	return texture2D( x, p - v * dt );
+}
+
+float jacobi( sampler2D F, sampler2D G, vec2 p, float alpha, float beta_inv ) {
+	float f_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
+	float f_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
+
+	float f_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).x;
+	float f_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).x;
+
+	float g = texture2D( G, p ).x;
+
+	return ( f_l + f_r + f_b + f_t + g * alpha ) * beta_inv;
+}
+
+float div2( sampler2D F, vec2 p ) {
+	float x_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
+	float x_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
+
+	float y_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).y;
+	float y_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).y;
+
+	return ( ( x_r - x_l ) + ( y_t - y_b ) ) * 0.5;
+}
+
+vec2 grad2( sampler2D F, vec2 p ) {
+	float f_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
+	float f_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
+
+	float f_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).x;
+	float f_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).x;
+
+	return vec2( f_r - f_l, f_t - f_b ) * 0.5;
+}
+
+// jacobi( pressure, div( velocity ) )
