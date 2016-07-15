@@ -1,39 +1,127 @@
+// | - v - |
+// u   s   u
+// | - v - |
+
+uniform vec2 scale_inv;
+
+/////////////////////////////////////////
+vec4 value4( sampler2D F, vec2 p ) {
+	return texture2D( F, p * scale_inv );
+}
+
+vec2 value2( sampler2D F, vec2 p ) {
+	return texture2D( F, p * scale_inv ).xy;
+}
+
+vec value( sampler2D F, vec2 p ) {
+	return texture2D( F, p * scale_inv ).x;
+}
+
+vec value_x( sampler2D F, vec2 p ) {
+	return texture2D( F, p * scale_inv ).x;
+}
+
+vec value_y( sampler2D F, vec2 p ) {
+	return texture2D( F, p * scale_inv ).y;
+}
+
+/////////////////////////////////////////
 vec4 advect( sampler2D F, sampler2D U, vec2 p, float dt ) {
-	vec2 v = texture2D( U, p ).xy;
+	vec2 u = value2( U, p );
 
-	return texture2D( x, p - v * dt );
+	return value4( F, p - u * dt ); // higher order
 }
 
-float jacobi( sampler2D F, sampler2D G, vec2 p, float alpha, float beta_inv ) {
-	float f_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
-	float f_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
+vec2 force( sampler2D U, vec2 p, float acc, float dt ) {
+	vec2 u = value2( U, p );
 
-	float f_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).x;
-	float f_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).x;
-
-	float g = texture2D( G, p ).x;
-
-	return ( f_l + f_r + f_b + f_t + g * alpha ) * beta_inv;
+	return u + acc * dt;
 }
 
-float div2( sampler2D F, vec2 p ) {
-	float x_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
-	float x_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
+vec4 jacobi( sampler2D F, sampler2D G, vec2 p, vec2 e ) {
+	vec4 f_l = value4( F, p + vec2( -1.0, 0.0 ) );
+	vec4 f_r = value4( F, p + vec2( +1.0, 0.0 ) );
+	vec4 f_b = value4( F, p + vec2( 0.0, -1.0 ) );
+	vec4 f_t = value4( F, p + vec2( 0.0, +1.0 ) );
 
-	float y_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).y;
-	float y_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).y;
+	vec4 g = value4( G, p );
+
+	return ( f_l + f_r + f_b + f_t + g * e.x ) * e.y;
+}
+
+float div( sampler2D F, vec2 p ) {
+	float x_l = value_x( F, p + vec2( -1.0, 0.0 ) );
+	float x_r = value_x( F, p + vec2( +1.0, 0.0 ) );
+	float y_b = value_y( F, p + vec2( 0.0, -1.0 ) );
+	float y_t = value_y( F, p + vec2( 0.0, +1.0 ) );
 
 	return ( ( x_r - x_l ) + ( y_t - y_b ) ) * 0.5;
 }
 
-vec2 grad2( sampler2D F, vec2 p ) {
-	float f_l = texture2D( F, p + vec2( -1.0, 0.0 ) ).x;
-	float f_r = texture2D( F, p + vec2( +1.0, 0.0 ) ).x;
-
-	float f_b = texture2D( F, p + vec2( 0.0, -1.0 ) ).x;
-	float f_t = texture2D( F, p + vec2( 0.0, +1.0 ) ).x;
+vec2 grad( sampler2D F, vec2 p ) {
+	float f_l = value( F, p + vec2( -1.0, 0.0 ) );
+	float f_r = value( F, p + vec2( +1.0, 0.0 ) );
+	float f_b = value( F, p + vec2( 0.0, -1.0 ) );
+	float f_t = value( F, p + vec2( 0.0, +1.0 ) );
 
 	return vec2( f_r - f_l, f_t - f_b ) * 0.5;
 }
 
-// jacobi( pressure, div( velocity ) )
+/////////////////////////////////////////
+#ifdef PASS_ADVERT
+uniform sampler2D F, U;
+uniform float dt;
+
+void main( void ) {
+	vec2 p = gl_FragCoord.xy;
+
+	gl_FragColor = advert( F, U, p, dt );
+}
+#endif
+
+/////////////////////////////////////////
+#ifdef PASS_FORCE
+uniform sampler2D U;
+uniform float acc, dt;
+
+void main( void ) {
+	vec2 p = gl_FragCoord.xy;
+
+	gl_FragColor = vec4( force( U, p, acc, dt ), 0.0, 0.0 );
+}
+#endif
+
+/////////////////////////////////////////
+#ifdef PASS_DIV
+uniform sampler2D U;
+
+void main( void ) {
+	vec2 p = gl_FragCoord.xy;
+
+	gl_FragColor = vec4( div( U, p ) );
+}
+#endif
+
+/////////////////////////////////////////
+#ifdef PASS_JACOBI
+uniform sampler2D F, G;
+vec2 e;
+
+void main( void ) {
+	vec2 p = gl_FragCoord.xy;
+
+	gl_FragColor = jacobi( F, G, p, e );
+}
+#endif
+
+/////////////////////////////////////////
+#ifdef PASS_GRAD
+uniform sampler2D F, U;
+vec2 e;
+
+void main( void ) {
+	vec2 p = gl_FragCoord.xy;
+
+	gl_FragColor = vec4( value2( F, p ) - grad( U, p ), 0.0, 0.0 );
+}
+#endif
