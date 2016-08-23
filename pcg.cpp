@@ -12,7 +12,7 @@ Eigen::VectorXf Diagonal( const Eigen::MatrixXf &A ) {
 }
 
 Eigen::VectorXf PCG( const Eigen::MatrixXf &A, const Eigen::VectorXf &b, int maxIters ) {
-	Eigen::VectorXf M = Disgonal( A );
+	Eigen::VectorXf M = Diagonal( A );
 
 	Eigen::VectorXf x = Eigen::VectorXf::Zero(A.cols());
 	Eigen::VectorXf p = Eigen::VectorXf::Zero(A.cols());
