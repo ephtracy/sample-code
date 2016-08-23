@@ -1,5 +1,5 @@
-Eigen::VectorXf PCG( const Eigen::MatrixXf &A, const Eigen::VectorXf &b, int maxIters ) {
-	Eigen::VectorXf M( A.cols() );
+Eigen::VectorXf Diagonal( const Eigen::MatrixXf &A ) {
+	Eigen::VectorXf M(A.cols());
 	for ( int i = 0; i < A.cols(); i++ ) {
 		float a = A(i, i);
 		if ( fabs( a ) > 1e-6 ) {
@@ -8,6 +8,11 @@ Eigen::VectorXf PCG( const Eigen::MatrixXf &A, const Eigen::VectorXf &b, int max
 			M(i) = 1.0f;
 		}
 	}
+	return M;
+}
+
+Eigen::VectorXf PCG( const Eigen::MatrixXf &A, const Eigen::VectorXf &b, int maxIters ) {
+	Eigen::VectorXf M = Disgonal( A );
 
 	Eigen::VectorXf x = Eigen::VectorXf::Zero(A.cols());
 	Eigen::VectorXf p = Eigen::VectorXf::Zero(A.cols());
